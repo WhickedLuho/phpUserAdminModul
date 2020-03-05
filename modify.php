@@ -137,43 +137,13 @@ echo"</tbody>
           $emailErr = "Invalid email format";
         }
       }
-      
-      if(empty($_POST["password"]) || empty($password)){
+   
+      if (empty($_POST["password"])) {
         $password = $pwdb;
-      }else{
+      } else {
+        $password = ($_POST["password"]);
         var_dump($password);
       }
-      //--------------------------------Password Valid...
-      /*
-      
-      if(!empty($_POST["password"]) && ($_POST["password"] == $_POST["cpassword"])) {
-        $password = test_input($_POST["password"]);
-        $cpassword = test_input($_POST["cpassword"]);
-      
-        if (strlen($_POST["password"]) <= 6) {
-            $passwordErr .= "Your Password Must Contain At Least 6 Characters!";
-        }
-        elseif(!preg_match("#[0-9]+#",$password)) {
-            $passwordErr .= "Your Password Must Contain At Least 1 Number!";
-        }
-        elseif(!preg_match("#[A-Z]+#",$password)) {
-            $passwordErr .= "Your Password Must Contain At Least 1 Capital Letter!";
-        }
-        elseif(!preg_match("#[a-z]+#",$password)) {
-            $passwordErr .= "Your Password Must Contain At Least 1 Lowercase Letter!";
-      
-        }
-        elseif(!preg_match("/\W/", $_POST["password"])) {
-          $passwordErr .= "Your Password Must Contain At Least 1 Special Character !"."<br>";
-      
-        }else{
-            var_dump($passwordErr, $cpasswordErr);
-            var_dump($password, $cpassword);
-            $cpasswordErr = "Please Check You've Entered Or Confirmed Your Password!";
-        }
-      }  
-      */
-      //--------------------------------Password Valid...
 
       if (empty($_POST["active"])) {
         $activeErr = "Active status is required";
@@ -212,17 +182,28 @@ echo"</tbody>
         $address = test_input($_POST["address"]);
       }
       
+      $usernameclean = ltrim($username0);
+      $usernameclean = rtrim($usernameclean);
+
+      include('db_config.php');
+      
+      $result = $connection->query("SELECT * FROM users WHERE username = '$usernameclean'");
+      if($result->num_rows == 0) {
+      } else {
+            $usernameErr = "This username is already taken bro.";
+      }
+      $connection->close();
+
+
       if(empty($usernameErr) && empty($nameErr) && empty($emailErr) && empty($activeErr)) {
       
-        $usernameclean = ltrim($username0);
-        $usernameclean = rtrim($usernameclean);
-
         var_dump($usernameclean,$password, $name, $email, $active, $permission, $country, $pcode, $city, $address);
         include('db_config.php');
 
-        $sql = "UPDATE `users` SET `name` = '$name' , `email` = '$email', `username` =' $usernameclean', `active` = '$active', 
+        $sql = "UPDATE `users` SET `name` = '$name' , `email` = '$email', `username` =' $usernameclean', `password` = '$password', `active` = '$active', 
           `permission` = '$permission', `country`  = '$country', `pcode` = '$pcode',  `city`  = '$city', `address`  = '$address'   
           WHERE `id` = '$member'";
+          var_dump($result = $connection->query($sql));
         if (!$result = $connection->query($sql)) {
             echo "Sorry, the website is experiencing problems.";
            var_dump( $connection->error);
@@ -253,7 +234,7 @@ echo"</tbody>
 <form class='form-group' method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" enctype="multipart/form-data">
 
   Username: <input type="text" name="username" value="" placeholder=<?php echo $usernamedb;?>>
-  <span class="error">* <?php echo $nameErr;?></span>
+  <span class="error">* <?php echo $usernameErr;?></span>
   <br><br>
 
   Name: <input type="text" name="name" value="" placeholder=<?php echo $namedb;?>>
@@ -264,11 +245,11 @@ echo"</tbody>
   <span class="error">* <?php echo $emailErr;?></span>
   <br><br>
 
-  Password: <input type="password" name="password" value="" placeholder=<?php echo $pwdb;?>>
+  Password: <input type="text" name="password" value="" placeholder=<?php echo $pwdb;?>>
   <span class="error">* <?php echo $passwordErr;?></span>
   <br><br>
 
-  Confirm password: <input type="password" name="cpassword" value="" >
+  Confirm password: <input type="text" name="cpassword" value="" placeholder=<?php echo $pwdb;?>>
   <span class="error">* <?php echo $cpasswordErr;?></span>
   <br><br>
 
@@ -283,7 +264,7 @@ echo"</tbody>
   <br><br>
 
   Permissions:
-  <input type="radio" name="permission" <?php if (isset($add) && $add=="add") echo "checked";?> value="add">Add New
+  <input type="radio" name="permission" <?php if (isset($add) && $add=="add") echo "checked";?> value="add">Add
   <input type="radio" name="permission" <?php if (isset($edit) && $edit=="edit") echo "checked";?> value="edit">Edit
   <input type="radio" name="permission" <?php if (isset($delete) && $delete=="delete") echo "checked";?> value="delete">Delete
   <br><br>
